@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Days</title>
+</head>
+<body>
+    <h1>Days</h1>
+    <p>Set last day:</p>
+    <input type="date" id="lastDate">
+    <button onclick="addDate()">addLastDate</button>
+    <br/>
+    <p>Set all days:</p>
+    <input type="file" id="fileInput">
+    <button onclick="setDates()">setAllDates</button>
+    <br/>
+    <p>Calculator:</p>
+    <button onclick="requestCalculation()">Calculte</button>
+    
+    <div id="result"></div>
+
+    <script>
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    resolve(event.target.result);
+                };
+                reader.onerror = (error) => {
+                    reject(error);
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        function showError(tag, error){
+            console.error(tag, error);
+            document.getElementById('result').innerHTML = '<p>Error from server</p>';
+        }
+
+        async function setDates() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file.');
+                return;
+            }
+            var jsonStr = await readFile(file);
+            fetch('/add-json-dates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: jsonStr
+                })
+                .then(response => response.text())
+                .then(message => {
+                    alert(message);
+                })
+                .catch(error => {
+                    showError('Error setting the days into the server: ',error);
+                });
+        }
+        function addDate() {
+            const lastDate = document.getElementById('lastDate').value;
+            fetch('/add-date',{
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ date: lastDate })
+                })
+                .then(response => response.text())
+                .then(message => {
+                    alert(message);
+                })
+                .catch(error => {
+                    showError('Error setting one day into the server: ',error);
+                });
+        }
+        async function requestCalculation() {            
+            var response = await fetch('/days');
+            var data;
+            if(response.status=="200"){
+                data = await response.json();
+            }
+            else{
+                var errorText = await response.text();
+                showError('Error getting the days from server: ',new Error(errorText));
+            }
+            if(data){
+                const startDay = new Date(data.startDay);
+
+                const endDay = new Date(data.endDay);
+
+                document.getElementById('result').innerHTML = `
+                    <p>the days are from ${startDay.toLocaleDateString()} to ${endDay.toLocaleDateString()}.</p>
+                `;  
+            }                      
+        }
+    </script>
+</body>
+</html>
