@@ -16,7 +16,8 @@ app.post("/add-json-dates", (req, res) => {
   savedDates = dates;
   try {
     const dbClient = new DBclient();
-    dbClient.delete().then(() => dbClient.save(savedDates)); //overwrite all items
+    const dbClient2 = new DBclient();
+    dbClient.delete().then(() => dbClient2.save(savedDates)); //overwrite all items
   } catch (error) {
     console.error("Error saving dates:", error);
   }
@@ -28,7 +29,8 @@ app.post("/add-date", (req, res) => {
   savedDates.push(date);
   try {
     const dbClient = new DBclient();
-    dbClient.delete().then(() => dbClient.save(savedDates)); //overwrite all items
+    const dbClient2 = new DBclient();
+    dbClient.delete().then(() => dbClient2.save(savedDates)); //overwrite all items
   } catch (error) {
     console.error("Error saving dates:", error);
   }
@@ -36,7 +38,7 @@ app.post("/add-date", (req, res) => {
 });
 
 app.get("/days", async (req, res) => {
-  if (savedDates.length === 0) {
+  if (savedDates || savedDates.length === 0) {
     try {
       const dbClient = new DBclient();
       var s_savedDates = await dbClient.getAllDates(); //string from db
