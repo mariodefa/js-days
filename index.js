@@ -41,7 +41,8 @@ app.get("/days", async (req, res) => {
   if (savedDates || savedDates.length === 0) {
     try {
       const dbClient = new DBclient();
-      savedDates = await dbClient.getAllDates(); //string to json automatic from db
+      const s_savedDates = await dbClient.getAllDates(); //string from db
+      savedDates = JSON.parse(s_savedDates);
     } catch (err) {
       console.error("Error retrieving dates from DB:", err);
       res.status(500).send("DB error retrieving dates");

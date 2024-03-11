@@ -79,7 +79,7 @@ class DBclient {
         }
         this.disconnect();
         if (rows.length > 0) {
-          return resolve(rows[0]);
+          return resolve(rows[0].Raw);
         } else {
           return resolve(null);
         }
