@@ -1,6 +1,7 @@
 const mysql = require("mysql");
 
 class DBclient {
+  connection = null;
   constructor() {
     this.connection = mysql.createConnection({
       host: "sql11.freesqldatabase.com",
@@ -9,28 +10,46 @@ class DBclient {
       database: "sql11690294",
       port: "3306",
     });
-
-    this.connection.connect((err) => {
-      if (err) throw err;
-      console.log("Connected to DB successfully");
-    });
   }
 
-  delete() {
+  connect() {
     return new Promise((resolve, reject) => {
-      this.connection.query("DELETE FROM `Dates`;", (err, result) => {
+      this.connection.connect((err) => {
         if (err) {
-          console.error("Error deleting dates:", err);
+          console.error("Error connecting to db:", err);
           return reject(false);
         }
-        console.log("Old dates deleted successfully");
-        resolve(true);
+        console.log("Connected to DB successfully");
+        return resolve(true);
       });
     });
   }
 
-  save(dates) {
+  disconnect() {
+    if (this.connection) {
+      this.connection.end();
+    }
+  }
+
+  async delete() {
+    await this.connect();
+    return new Promise((resolve, reject) => {
+      this.connection.query("DELETE FROM `Dates`;", (err, result) => {
+        if (err) {
+          console.error("Error deleting dates:", err);
+          this.disconnect();
+          return reject(false);
+        }
+        console.log("Old dates deleted successfully");
+        this.disconnect();
+        return resolve(true);
+      });
+    });
+  }
+
+  async save(dates) {
     const sDates = JSON.stringify(dates);
+    await this.connect();
     return new Promise((resolve, reject) => {
       this.connection.query(
         "INSERT INTO `Dates` (`Raw`) VALUES (?)",
@@ -38,26 +57,31 @@ class DBclient {
         (err, result) => {
           if (err) {
             console.error("Error saving date:", err);
+            this.disconnect();
             return reject(false);
           }
           console.log("Date saved successfully");
-          resolve(true);
+          this.disconnect();
+          return resolve(true);
         }
       );
     });
   }
 
-  getAllDates() {
+  async getAllDates() {
+    await this.connect();
     return new Promise((resolve, reject) => {
       this.connection.query("SELECT `Raw` FROM `Dates`", (err, rows) => {
         if (err) {
           console.error("Error retrieving dates:", err);
+          this.disconnect();
           return reject(err);
         }
+        this.disconnect();
         if (rows.length > 0) {
-          resolve(rows[0]);
+          return resolve(rows[0]);
         } else {
-          resolve(null);
+          return resolve(null);
         }
       });
     });
